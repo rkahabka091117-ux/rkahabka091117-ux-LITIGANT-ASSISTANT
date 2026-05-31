@@ -1,0 +1,47 @@
+package com.example
+
+import android.app.Application
+import android.content.Context
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
+import com.example.ui.CaseVaultApp
+import com.example.ui.CaseViewModel
+import com.example.ui.theme.MyApplicationTheme
+import org.junit.Assert.assertEquals
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [36])
+class ExampleRobolectricTest {
+
+  @get:Rule val composeTestRule = createComposeRule()
+
+  @Test
+  fun `read string from context`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val appName = context.getString(R.string.app_name)
+    assertEquals("Self Litigant Assistant", appName)
+  }
+
+  @Test
+  fun testCaseVaultAppStartup() {
+    val app = ApplicationProvider.getApplicationContext<Application>()
+    val viewModel = CaseViewModel(app)
+    composeTestRule.setContent {
+      MyApplicationTheme {
+        CaseVaultApp(viewModel)
+      }
+    }
+    // We let composition complete to see if any runtime exceptions are thrown
+    composeTestRule.waitForIdle()
+  }
+
+  @Test
+  fun testMainActivityLaunch() {
+    org.robolectric.Robolectric.buildActivity(MainActivity::class.java).setup()
+  }
+}

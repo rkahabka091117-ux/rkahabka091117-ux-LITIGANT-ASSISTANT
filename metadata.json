@@ -1,0 +1,8 @@
+{
+  "name": "Self Litigant Assistant",
+  "description": "An interactive AI-assisted legal case vault and document creator for Michigan pro se litigants. Connect chats, verify filings, analyze policies vs practices, and track contractor/agency misconduct.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
