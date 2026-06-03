@@ -44,7 +44,6 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
     }
   }
   compileOptions {
@@ -154,4 +153,3 @@ tasks.register<Zip>("zipSourceCode") {
 tasks.matching { it.name == "assembleDebug" }.configureEach {
     finalizedBy("copyApkToRoot", "zipSourceCode")
 }
-
