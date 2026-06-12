@@ -62,7 +62,6 @@ fun CaseVaultApp(viewModel: CaseViewModel) {
     val userCredits by viewModel.userCredits.collectAsStateWithLifecycle()
     val isUnlimitedAccessWaiver by viewModel.isUnlimitedAccessWaiver.collectAsStateWithLifecycle()
     val isGeneratingDoc by viewModel.isGeneratingDoc.collectAsStateWithLifecycle()
-    val selectedProvider by viewModel.selectedProvider.collectAsStateWithLifecycle()
 
     val ambientBubbleActive by viewModel.ambientBubbleActive.collectAsStateWithLifecycle(initialValue = false)
 
@@ -70,7 +69,6 @@ fun CaseVaultApp(viewModel: CaseViewModel) {
     var showDisclaimerDialog by remember { mutableStateOf(false) }
     var showCreateCaseDialog by remember { mutableStateOf(false) }
     var showMiniOverlayHub by remember { mutableStateOf(false) }
-    var showProviderPickerDialog by remember { mutableStateOf(false) }
 
     // Navigation and Responsive layout calculation
     val configuration = LocalConfiguration.current
@@ -256,21 +254,6 @@ fun CaseVaultApp(viewModel: CaseViewModel) {
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text("New Case", color = ObsidianBackground, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    }
-
-                                    // AI Provider Picker Button
-                                    IconButton(
-                                        onClick = { showProviderPickerDialog = true },
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .background(GoldAccent.copy(alpha = 0.15f))
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.SmartToy,
-                                            contentDescription = "AI Provider: ${selectedProvider.displayName}",
-                                            tint = GoldAccent,
-                                            modifier = Modifier.size(22.dp)
-                                        )
                                     }
 
                                     // Shield Disclaimer Badge
@@ -703,111 +686,6 @@ fun CaseVaultApp(viewModel: CaseViewModel) {
                         colors = ButtonDefaults.buttonColors(containerColor = GoldAccent)
                     ) {
                         Text("I Certify as a Pro Se Litigant", color = ObsidianBackground, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    }
-
-    // AI Provider Picker Dialog
-    if (showProviderPickerDialog) {
-        Dialog(onDismissRequest = { showProviderPickerDialog = false }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF0D1B2E),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .border(1.dp, GoldAccent.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SmartToy,
-                        contentDescription = "AI Provider",
-                        tint = GoldAccent,
-                        modifier = Modifier.size(40.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Select AI Provider",
-                        color = GoldAccent,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Choose which AI backend powers all document generation and analysis.",
-                        color = TextMutedSlate,
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    com.example.ui.AiProvider.values().forEach { provider ->
-                        val isSelected = selectedProvider == provider
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(
-                                    if (isSelected) GoldAccent.copy(alpha = 0.18f)
-                                    else Color.White.copy(alpha = 0.04f)
-                                )
-                                .border(
-                                    width = if (isSelected) 1.5.dp else 0.5.dp,
-                                    color = if (isSelected) GoldAccent else TextMutedSlate.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .clickable {
-                                    viewModel.setAiProvider(provider)
-                                    showProviderPickerDialog = false
-                                }
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = {
-                                    viewModel.setAiProvider(provider)
-                                    showProviderPickerDialog = false
-                                },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = GoldAccent,
-                                    unselectedColor = TextMutedSlate
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = provider.displayName,
-                                    color = if (isSelected) GoldAccent else TextWarmCream,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    fontSize = 14.sp
-                                )
-                                Text(
-                                    text = when (provider) {
-                                        com.example.ui.AiProvider.GEMINI -> "Google Gemini 1.5 Flash"
-                                        com.example.ui.AiProvider.GROQ -> "Llama 3 70B · Ultra-fast inference"
-                                        com.example.ui.AiProvider.OPENROUTER -> "Mistral 7B via OpenRouter"
-                                        com.example.ui.AiProvider.BLACKBOX -> "Blackbox AI · Code & reasoning"
-                                    },
-                                    color = TextMutedSlate,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-                    TextButton(
-                        onClick = { showProviderPickerDialog = false },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Cancel", color = TextMutedSlate)
                     }
                 }
             }

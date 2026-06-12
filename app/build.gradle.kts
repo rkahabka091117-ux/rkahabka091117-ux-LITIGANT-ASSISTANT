@@ -8,7 +8,7 @@ plugins {
 
 android {
   namespace = "com.example"
-  compileSdk = 34
+  compileSdk = 36
 
   defaultConfig {
     applicationId = "com.aistudio.casevault.pzkqw"
@@ -41,7 +41,7 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("debugConfig")
+      signingConfig = signingConfigs.getByName("release")
     }
     debug {
       signingConfig = signingConfigs.getByName("debugConfig")
@@ -100,10 +100,6 @@ dependencies {
   implementation(libs.okhttp)
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
-  // Document Ingestion: PDF parsing (PDFBox for Android)
-  implementation("com.tom-roush:pdfbox-android:2.0.27.0")
-  // Document Ingestion: DOCX parsing (Apache POI)
-  implementation("org.apache.poi:poi-ooxml:5.2.5")
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
@@ -122,6 +118,7 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
+  implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 }
 
 val buildDirFile = layout.buildDirectory.file("outputs/apk/debug/app-debug.apk").get().asFile
@@ -145,16 +142,23 @@ tasks.register<Zip>("zipSourceCode") {
     destinationDirectory.set(rootDir)
 
     from(rootDir) {
-        exclude(".gradle")
-        exclude(".build-outputs")
-        exclude("**/build")
+        exclude("**/.gradle/**")
+        exclude("**/.build-outputs/**")
+        exclude("**/.kotlin/**")
+        exclude("**/build/**")
         exclude("**/local.properties")
-        exclude(".git")
+        exclude("**/.git/**")
+        exclude("**/.idea/**")
         exclude("APP_INSTALL_ME.apk")
         exclude("ZIPPED_SOURCE_CODE.zip")
+        exclude("**/debug.keystore")
+        exclude("**/debug.keystore.base64")
+        exclude("**/*.jks")
+        exclude("**/.env")
     }
 }
 
 tasks.matching { it.name == "assembleDebug" }.configureEach {
     finalizedBy("copyApkToRoot", "zipSourceCode")
 }
+

@@ -1,0 +1,12 @@
+*.apk
+*.aab
+*.zip
+.gradle/
+.build-outputs/
+build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+debug.keystore
+debug.keystore.base64

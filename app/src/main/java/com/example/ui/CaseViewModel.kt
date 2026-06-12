@@ -10,16 +10,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-// ============================================================
-// AI Provider Selection — add new providers here as needed
-// ============================================================
-enum class AiProvider(val displayName: String) {
-    GEMINI("Google Gemini"),
-    GROQ("Groq (Llama 3)"),
-    OPENROUTER("OpenRouter"),
-    BLACKBOX("Blackbox AI")
-}
-
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class CaseViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = CaseDatabase.getInstance(application)
@@ -308,70 +299,10 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- AI Provider Selection ---
-
-    private val _selectedProvider = MutableStateFlow(AiProvider.GEMINI)
-    val selectedProvider: StateFlow<AiProvider> = _selectedProvider.asStateFlow()
-
-    fun setAiProvider(provider: AiProvider) {
-        _selectedProvider.value = provider
-    }
-
     // --- AI Operations using Direct REST API ---
 
     private fun getApiKey(): String {
         return BuildConfig.GEMINI_API_KEY
-    }
-
-    /**
-     * Unified AI call helper — routes to the currently selected provider.
-     * All AI features in this ViewModel call this instead of Gemini directly.
-     *
-     * @param prompt     The full text prompt to send.
-     * @param temperature Generation temperature (0.0–1.0). Default 0.4.
-     * @return           The text response from the selected provider, or null on failure.
-     */
-    private suspend fun callAi(prompt: String, temperature: Float = 0.4f): String? {
-        return when (_selectedProvider.value) {
-            AiProvider.GEMINI -> {
-                val request = GeminiRequest(
-                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
-                    generationConfig = GeminiGenerationConfig(temperature = temperature)
-                )
-                RetrofitClient.service.generateContent(BuildConfig.GEMINI_API_KEY, request)
-                    .candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-            }
-            AiProvider.GROQ -> {
-                val request = GroqRequest(
-                    messages = listOf(GroqMessage(role = "user", content = prompt)),
-                    temperature = temperature
-                )
-                GroqRetrofitClient.service.chatCompletion(
-                    bearerToken = "Bearer ${BuildConfig.GROQ_API_KEY}",
-                    request = request
-                ).extractText()
-            }
-            AiProvider.OPENROUTER -> {
-                val request = OpenRouterRequest(
-                    messages = listOf(OpenRouterMessage(role = "user", content = prompt)),
-                    temperature = temperature
-                )
-                OpenRouterRetrofitClient.service.chatCompletion(
-                    bearerToken = "Bearer ${BuildConfig.OPENROUTER_API_KEY}",
-                    request = request
-                ).extractText()
-            }
-            AiProvider.BLACKBOX -> {
-                val request = BlackboxRequest(
-                    messages = listOf(BlackboxMessage(role = "user", content = prompt)),
-                    temperature = temperature
-                )
-                BlackboxRetrofitClient.service.chatCompletion(
-                    bearerToken = "Bearer ${BuildConfig.BLACKBOX_API_KEY}",
-                    request = request
-                ).extractText()
-            }
-        }
     }
 
     // AI real-time Policy vs Practice evaluation
@@ -411,11 +342,16 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
             """.trimIndent()
 
             try {
-                val resultText = callAi(prompt, temperature = 0.4f)
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.4f)
+                )
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val resultText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                     ?: "Unable to parse auditor response. Please check your incident description and try again."
                 _policyAnalysisResult.value = resultText
             } catch (e: Exception) {
-                _policyAnalysisResult.value = "Error during analysis: ${e.message}\nEnsure your AI API key is configured correctly in the Secrets Panel."
+                _policyAnalysisResult.value = "Error during analysis: ${e.message}\nEnsure your GEMINI_API_KEY is configured correctly in Secrets Panel."
             } finally {
                 isAnalyzingPolicy.value = false
             }
@@ -469,7 +405,12 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
             """.trimIndent()
 
             try {
-                val resultText = callAi(prompt, temperature = 0.3f)
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.3f)
+                )
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val resultText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                     ?: "Failed to generate briefing report."
                 _generatedOnePagerResult.value = resultText
                 
@@ -522,8 +463,14 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
             """.trimIndent()
 
             try {
-                val resultText = callAi(prompt, temperature = 0.5f)
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.5f)
+                )
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val resultText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                     ?: "Failed to compile document template."
+                
                 withContext(Dispatchers.Main) {
                     saveDocument(
                         title = "Draft Response: $formType",
@@ -684,7 +631,12 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
             """.trimIndent()
 
             try {
-                val resultText = callAi(prompt, temperature = 0.2f) ?: ""
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.2f)
+                )
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val resultText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: ""
                 
                 val cleanJson = resultText.trim().removeSurrounding("```json", "```").trim()
                 val jsonObject = com.squareup.moshi.Moshi.Builder().build().adapter(Map::class.java).fromJson(cleanJson)
@@ -941,7 +893,12 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
             """.trimIndent()
 
             try {
-                val resultText = callAi(prompt, temperature = 0.3f)
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.3f)
+                )
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val resultText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                     ?: "Failed to scan and convert capture."
                 _screenShareCaptureResult.value = resultText
 
@@ -1118,8 +1075,14 @@ class CaseViewModel(application: Application) : AndroidViewModel(application) {
                     currentMessages.joinToString("\n") { "${it["role"]?.uppercase()}: ${it["text"]}" } + 
                     "\n\nUSER SUMMONS FOR INTERACTIVE Note-taking/Research: $promptText\n\nProvide an exceptionally clear, supportive, and structured helper reply."
 
-                val aiResponseText = callAi(apiPrompt, temperature = 0.5f)
-                    ?: "Connection failed. Please check your network and AI API key in the Secrets Panel."
+                val apiKey = getApiKey()
+                val request = GeminiRequest(
+                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = apiPrompt)))),
+                    generationConfig = GeminiGenerationConfig(temperature = 0.5f)
+                )
+                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val aiResponseText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text 
+                    ?: "Connection failed. Please check your network and Google AI Studio API key in settings."
 
                 currentMessages.add(mapOf("role" to "assistant", "text" to aiResponseText, "timestamp" to userTime))
 
